@@ -1,8 +1,33 @@
 window.SPAWNING = [
-  { id: 'ralsei', config: 'Ralsei_CONFIG' }
+  { id: 'template', config: 'Template_CONFIG' }
 ];
 
 const GLOBAL_SCALE_MULTIPLIER = 0.6;
+
+// placeholder shimeji (default Shimeji-ee character) to draw over — only has
+// walk, pickup and climb frames, so the other states reuse those
+const T = 'shimeji/Template/';
+window.Template_CONFIG = {
+  "ALLOWANCES": ["drag", "bottom", "left", "right"],
+  "scale": 1,
+  "walkspeed": 40,
+  "fallspeed": 150,
+  "jumpspeed": 250,
+  "gettingupspeed": 1500,
+  "walk": { "frames": [T + "walk1.png", T + "walk2.png", T + "walk1.png", T + "walk3.png"], "interval": 300, "loops": 3 },
+  "stand": { "frames": [T + "walk1.png"], "interval": 400, "loops": 4 },
+  "forcewalk": { "loops": 4 },
+  "forcethink": { "frames": [T + "walk1.png"], "interval": 400, "loops": 2 },
+  "drag": { "frames": [T + "pickup1.png", T + "pickup2.png", T + "pickup3.png", T + "pickup4.png"], "interval": 300 },
+  "falling": { "frames": [T + "pickup1.png"], "interval": 300, "loops": 1 },
+  "fallen": { "frames": [T + "walk1.png"], "interval": 300, "loops": 1 },
+  "jump": { "frames": [T + "walk2.png"], "interval": 300 },
+  "ORIGINAL_ACTIONS": ["walk", "walk", "walk", "stand"],
+  "EDGE_ACTIONS": ["hang", "climb", "climb"],
+  "JUMP_CHANCE": 0.15,
+  "climbSide": { "frames": [T + "climb1.png", T + "climb2.png", T + "climb3.png"], "interval": 300, "loops": 3 },
+  "hangstillSide": { "frames": [T + "climb3.png"], "interval": 300, "loops": 1, "randomizeDuration": true, "min": 1500, "max": 4000 }
+};
 
 window.Ralsei_CONFIG = {
   "ALLOWANCES": [

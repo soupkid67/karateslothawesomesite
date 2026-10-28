@@ -1,0 +1,9 @@
+Default Shimeji character by Yuki Yamada (Group Finity), from Shimeji-ee:
+https://github.com/chaoskagami/shimeji-ee/tree/master/img/Shimeji
+Released under a BSD-style license (free to modify and redistribute; don't
+claim you made the original).
+
+Frames (128x128, feet on the bottom edge, facing left):
+  walk    walk1-3    (original plays 1,2,1,3)          was shime1, 2, 3
+  pickup  pickup1-4  (swings while held by the mouse)  was shime9, 7, 8, 10
+  climb   climb1-3   (climbing a wall; climb3 = hang)  was shime14, 12, 13

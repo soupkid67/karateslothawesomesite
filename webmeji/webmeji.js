@@ -504,9 +504,9 @@ class Creature {
     this.wallRect = rect;
     this.currentEdge = edge;
     this.positionX = this.wallBounds(rect, edge).x;
-    this.direction = 1;
     this.updateEdgeClass();
     this.startAction('climbSide');
+    this.direction = 1; // after startAction, which picks a random climb direction
   }
 
   // climbed up past the top of a wall — step onto the div's top surface
