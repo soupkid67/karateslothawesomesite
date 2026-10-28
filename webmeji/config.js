@@ -8,7 +8,9 @@ window.Ralsei_CONFIG = {
   "ALLOWANCES": [
     "pet",
     "drag",
-    "bottom"
+    "bottom",
+    "left",
+    "right"
   ],
   "scale": 1.1,
   "walkspeed": 50,
@@ -332,8 +334,7 @@ window.Ralsei_CONFIG = {
     "hang",
     "climb",
     "climb",
-    "climb",
-    "fall"
+    "climb"
   ],
   "JUMP_CHANCE": 0.15,
   "climbSide": {

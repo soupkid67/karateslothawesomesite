@@ -100,6 +100,9 @@ const pageWidth = () => document.documentElement.clientWidth;
 const pageHeight = () => document.documentElement.scrollHeight;
 // how far above its feet a creature will jump to reach a walkable platform
 const PLATFORM_CLIMB_REACH = 300;
+// chance a creature climbs down a platform's side instead of turning around
+// when it walks to the platform's edge
+const CLIMB_DOWN_CHANCE = 0.5;
 const PLATFORM_JUMP_BOOST = 1.3;
 
 // ------------------------------------------------------------------------
@@ -156,6 +159,7 @@ class Creature {
   constructor(containerId, spriteConfig) {
     this.currentEdge = 'bottom';
     this.currentPlatform = null; // {left,right,top,bottom,el} of a walkable div, or null = window floor
+    this.wallRect = null; // walkable div whose side the creature is climbing (currentEdge 'left'/'right')
 
     // create div to hold the sprite image
     this.container = document.createElement('div');
@@ -465,6 +469,60 @@ class Creature {
     this.fallToBottom(carryDirection * this.spriteConfig.walkspeed * 0.6, 0, leavingPlatformEl);
   }
 
+  // walls are the left/right sides of walkable divs rather than the sides
+  // of the page. x is where the creature sits against that side, and y can
+  // range from standing on the div's top down to its bottom.
+  wallBounds(rect, edge) {
+    return {
+      x: edge === 'left' ? rect.left : rect.right - this.containerWidth,
+      minY: rect.top - this.containerHeight,
+      maxY: rect.bottom - this.containerHeight
+    };
+  }
+
+  // finds a walkable div side within jump reach of the creature, and a
+  // spot on it to land
+  findWall(edge) {
+    const reach = 260;
+    const options = WalkableManager.rects
+      .map(r => ({ rect: r, ...this.wallBounds(r, edge) }))
+      .filter(w => w.maxY > w.minY + this.containerHeight
+        && Math.abs(w.x - this.positionX) <= reach
+        && w.maxY >= this.positionY - PLATFORM_CLIMB_REACH);
+    if (!options.length) return null;
+    const w = options[Math.floor(Math.random() * options.length)];
+    const lowY = Math.max(w.minY, this.positionY - PLATFORM_CLIMB_REACH);
+    return { rect: w.rect, x: w.x, y: lowY + Math.random() * (w.maxY - lowY) };
+  }
+
+  // grabs onto the side of the platform the creature is standing on and
+  // starts climbing down it
+  startClimbDown(edge) {
+    const rect = this.currentPlatform;
+    this.resetAnimation();
+    this.currentPlatform = null;
+    this.wallRect = rect;
+    this.currentEdge = edge;
+    this.positionX = this.wallBounds(rect, edge).x;
+    this.direction = 1;
+    this.updateEdgeClass();
+    this.startAction('climbSide');
+  }
+
+  // climbed up past the top of a wall — step onto the div's top surface
+  climbOntoTop() {
+    const rect = this.wallRect;
+    const edge = this.currentEdge;
+    this.resetAnimation();
+    this.wallRect = null;
+    this.currentEdge = 'bottom';
+    this.currentPlatform = rect;
+    this.positionY = rect.top - this.containerHeight;
+    this.direction = edge === 'left' ? 1 : -1;
+    this.updateEdgeClass();
+    this.setNextAction();
+  }
+
   // finds a walkable platform worth jumping to from where the creature
   // currently is — used both from the window floor (climb up onto one) and
   // from atop a platform (hop to a different one)
@@ -620,13 +678,14 @@ class Creature {
         endX = Math.random() * (pageWidth() - this.containerWidth); // random horizontal
         break;
       case 'left':
-        endX = 0;
-        endY = Math.random() * (pageHeight() - this.containerHeight); // random vertical
+      case 'right': {
+        const wall = this.findWall(targetEdge);
+        if (!wall) { this.isJumping = false; return; }
+        this.wallRect = wall.rect;
+        endX = wall.x;
+        endY = wall.y;
         break;
-      case 'right':
-        endX = pageWidth() - this.containerWidth;
-        endY = Math.random() * (pageHeight() - this.containerHeight); // random vertical
-        break;
+      }
     }
 
     const dx = endX - startX;
@@ -1032,6 +1091,7 @@ class Creature {
     this.isFalling = true;
     this.currentEdge = 'bottom';
     this.currentPlatform = null;
+    this.wallRect = null;
     this.updateEdgeClass();
     this.resetAnimation();
 
@@ -1201,7 +1261,7 @@ class Creature {
           // if a walkable object sits right where this jump is headed (e.g.
           // a walkable div near the roof), land on top of it instead of
           // flying at the literal window edge and getting stuck against it
-          const blockingPlatform = this.platformNearEdge(target);
+          const blockingPlatform = target === 'top' && this.platformNearEdge(target);
           if (blockingPlatform) {
             this.jumpToPlatform(blockingPlatform);
           } else {
@@ -1383,6 +1443,15 @@ class Creature {
       return;
     }
 
+    // keep a climbing creature glued to its wall (handles resize/layout shifts)
+    if (this.wallRect && this.isSideEdge(this.currentEdge) && !this.isJumping && !this.isFalling && !this.isDragging) {
+      const fresh = WalkableManager.liveRectFor(this.wallRect.el);
+      if (fresh) {
+        this.wallRect = fresh;
+        this.positionX = this.wallBounds(fresh, this.currentEdge).x;
+      }
+    }
+
     // keep the creature glued to its platform (handles scroll/resize/move)
     // before doing any movement math this frame
     this.syncToPlatform();
@@ -1404,7 +1473,14 @@ class Creature {
       // around at a platform's edge instead of walking off it
       const bounds = (this.currentAction === 'climbTop') ? { left: 0, right: this.maxPos } : this.getFloorBounds();
 
-      if (this.positionX <= bounds.left) {
+      const climbDown = this.currentPlatform && this.currentAction !== 'climbTop' && Math.random() < CLIMB_DOWN_CHANCE;
+      if (this.positionX <= bounds.left && climbDown && this.spriteConfig.ALLOWANCES.includes('left')) {
+        this.positionX = bounds.left;
+        this.startClimbDown('left');
+      } else if (this.positionX >= bounds.right && climbDown && this.spriteConfig.ALLOWANCES.includes('right')) {
+        this.positionX = bounds.right;
+        this.startClimbDown('right');
+      } else if (this.positionX <= bounds.left) {
         this.positionX = bounds.left;
         this.direction = 1;
         this.facing = 'right';
@@ -1428,16 +1504,19 @@ class Creature {
       }
       this.updateImageDirection();
 
-      // flips sprites and movement direction upon reaching a wall
-      const maxY = pageHeight() - this.containerHeight;
-      if (this.positionY <= 0) {
-        this.positionY = 0;
-        this.direction = 1;
-      } else if (this.positionY >= maxY) {
-        this.positionY = maxY;
-        this.direction = -1;
+      // climbing up past the top steps onto the div; reaching the bottom
+      // hops down to whatever is below
+      const wall = this.wallRect && this.wallBounds(this.wallRect, this.currentEdge);
+      if (!wall) {
+        this.fallToBottom();
+      } else if (this.positionY <= wall.minY) {
+        this.climbOntoTop();
+      } else if (this.positionY >= wall.maxY) {
+        this.positionY = wall.maxY;
+        this.fallToBottom();
+      } else {
+        this.applyEdgeOffset();
       }
-      this.applyEdgeOffset();
     }
     this.animationFrameId = requestAnimationFrame(this.animate);
   }
