@@ -92,6 +92,14 @@ const DEFAULT_PHYSICS = {
 };
 
 const WALK_TURN_CHANCE = 1.3;
+
+// creatures live in page (document) coordinates instead of the viewport, so
+// they scroll with the site and stand on walkable elements like part of the
+// page. the "window" floor/walls are the edges of the whole page.
+const pageWidth = () => document.documentElement.clientWidth;
+const pageHeight = () => document.documentElement.scrollHeight;
+// how far above its feet a creature will jump to reach a walkable platform
+const PLATFORM_CLIMB_REACH = 300;
 const PLATFORM_JUMP_BOOST = 1.3;
 
 // ------------------------------------------------------------------------
@@ -122,7 +130,7 @@ const WalkableManager = {
     this.rects = Array.from(els)
       .map(el => {
         const r = el.getBoundingClientRect();
-        return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, el };
+        return { left: r.left + scrollX, right: r.right + scrollX, top: r.top + scrollY, bottom: r.bottom + scrollY, el };
       })
       .filter(r => r.right > r.left && r.bottom > r.top); // skip hidden/zero-size elements
   },
@@ -133,7 +141,7 @@ const WalkableManager = {
     if (!el || !document.contains(el)) return null;
     const r = el.getBoundingClientRect();
     if (r.right <= r.left || r.bottom <= r.top) return null; // became hidden
-    return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, el };
+    return { left: r.left + scrollX, right: r.right + scrollX, top: r.top + scrollY, bottom: r.bottom + scrollY, el };
   }
 };
 
@@ -257,19 +265,25 @@ class Creature {
     this.containerWidth = parseFloat(containerStyle.width);
     this.containerHeight = parseFloat(containerStyle.height);
 
-    // spawn at random bottom position
-    this.positionX = Math.random() * (window.innerWidth - this.containerWidth);
-    this.positionY = window.innerHeight - this.containerHeight;
+    // spawn standing on a random walkable platform, or the page floor if none
+    WalkableManager.refresh();
+    const spawnPlatform = WalkableManager.rects[Math.floor(Math.random() * WalkableManager.rects.length)];
+    if (spawnPlatform) {
+      this.currentPlatform = spawnPlatform;
+      this.positionX = spawnPlatform.left + Math.random() * Math.max(0, spawnPlatform.right - spawnPlatform.left - this.containerWidth);
+      this.positionY = spawnPlatform.top - this.containerHeight;
+    } else {
+      this.positionX = Math.random() * (pageWidth() - this.containerWidth);
+      this.positionY = pageHeight() - this.containerHeight;
+    }
 
     this.container.style.left = `${this.positionX}px`;
     this.container.style.top = `${this.positionY}px`;
 
-    this.maxPos = window.innerWidth - this.containerWidth; // max horizontal position
+    this.maxPos = pageWidth() - this.containerWidth; // max horizontal position
     this.forceWalkAfter = false; // flag for forcing walk after some actions
     this.forceThinkAfter = false;
 
-    this.container.style.left = `${this.positionX}px`;
-    this.container.style.top = 'auto'; // reset top for CSS positioning
     this.baseBottom = 0; // reference for bottom alignment
 
     this.updateImageDirection(); // set initial facing
@@ -287,7 +301,7 @@ class Creature {
       const style = window.getComputedStyle(this.container);
       this.containerWidth = parseFloat(style.width);
       this.containerHeight = parseFloat(style.height);
-      this.maxPos = window.innerWidth - this.containerWidth;
+      this.maxPos = pageWidth() - this.containerWidth;
       this.positionX = Math.min(this.positionX, this.maxPos);
       this.container.style.left = `${this.positionX}px`;
     };
@@ -459,6 +473,7 @@ class Creature {
     const centerX = this.positionX + this.containerWidth / 2;
     const candidates = WalkableManager.rects.filter(r => {
       if (this.currentPlatform && r.el === this.currentPlatform.el) return false; // already there
+      if (r.top < this.positionY + this.containerHeight - PLATFORM_CLIMB_REACH) return false; // too high to reach
       return centerX >= r.left - reach && centerX <= r.right + reach;
     });
     if (!candidates.length) return null;
@@ -482,7 +497,7 @@ class Creature {
     const candidates = WalkableManager.rects.filter(r => {
       if (edge === 'top') return r.top <= closeMargin && centerX >= r.left - reach && centerX <= r.right + reach;
       if (edge === 'left') return r.left <= closeMargin && centerY >= r.top - reach && centerY <= r.bottom + reach;
-      if (edge === 'right') return r.right >= window.innerWidth - closeMargin && centerY >= r.top - reach && centerY <= r.bottom + reach;
+      if (edge === 'right') return r.right >= pageWidth() - closeMargin && centerY >= r.top - reach && centerY <= r.bottom + reach;
       return false;
     });
     if (!candidates.length) return null;
@@ -602,15 +617,15 @@ class Creature {
     switch (targetEdge) {
       case 'top':
         endY = 0;
-        endX = Math.random() * (window.innerWidth - this.containerWidth); // random horizontal
+        endX = Math.random() * (pageWidth() - this.containerWidth); // random horizontal
         break;
       case 'left':
         endX = 0;
-        endY = Math.random() * (window.innerHeight - this.containerHeight); // random vertical
+        endY = Math.random() * (pageHeight() - this.containerHeight); // random vertical
         break;
       case 'right':
-        endX = window.innerWidth - this.containerWidth;
-        endY = Math.random() * (window.innerHeight - this.containerHeight); // random vertical
+        endX = pageWidth() - this.containerWidth;
+        endY = Math.random() * (pageHeight() - this.containerHeight); // random vertical
         break;
     }
 
@@ -880,12 +895,12 @@ class Creature {
         let clientX = e.clientX ?? e.touches?.[0].clientX;
         let clientY = e.clientY ?? e.touches?.[0].clientY;
 
-        this.positionX = clientX - offsetX;
-        this.positionY = clientY - offsetY;
+        this.positionX = clientX - offsetX + scrollX;
+        this.positionY = clientY - offsetY + scrollY;
 
-        // clamp to window
-        this.positionX = Math.max(0, Math.min(this.positionX, window.innerWidth - this.containerWidth));
-        this.positionY = Math.max(0, Math.min(this.positionY, window.innerHeight - this.containerHeight));
+        // clamp to page
+        this.positionX = Math.max(0, Math.min(this.positionX, pageWidth() - this.containerWidth));
+        this.positionY = Math.max(0, Math.min(this.positionY, pageHeight() - this.containerHeight));
 
         this.container.style.left = this.positionX + 'px';
         this.container.style.top = this.positionY + 'px';
@@ -935,7 +950,7 @@ class Creature {
   // it there — it just carries on falling past it to the floor below.
   findImmediateLanding(excludeEl = null) {
     const centerX = this.positionX + this.containerWidth / 2;
-    const winFloorY = window.innerHeight - this.containerHeight;
+    const winFloorY = pageHeight() - this.containerHeight;
     let best = null;
 
     WalkableManager.rects.forEach(r => {
@@ -1083,7 +1098,7 @@ class Creature {
       if (this.velocityY >= 0) {
         const centerX = this.positionX + this.containerWidth / 2;
 
-        const winFloorY = window.innerHeight - this.containerHeight;
+        const winFloorY = pageHeight() - this.containerHeight;
         if (prevY <= winFloorY && this.positionY >= winFloorY) {
           landing = { floorY: winFloorY, platform: null };
         }
@@ -1173,7 +1188,7 @@ class Creature {
     }
 
     if (!this.isJumping && this.currentEdge === 'bottom') {
-      const atWindowFloor = this.currentPlatform === null && this.positionY >= window.innerHeight - this.containerHeight;
+      const atWindowFloor = this.currentPlatform === null && this.positionY >= pageHeight() - this.containerHeight;
 
       // chance to jump to a window edge (top/left/right) — only from the window floor
       if (atWindowFloor && Math.random() < this.spriteConfig.JUMP_CHANCE) {
@@ -1385,27 +1400,20 @@ class Creature {
       this.setFacingFromDelta(dx);
 
       // walking on top of a walkable div uses its bounds; walking on the
-      // window floor uses the window's bounds like before
+      // window floor uses the window's bounds like before. creatures turn
+      // around at a platform's edge instead of walking off it
       const bounds = (this.currentAction === 'climbTop') ? { left: 0, right: this.maxPos } : this.getFloorBounds();
 
       if (this.positionX <= bounds.left) {
         this.positionX = bounds.left;
-        if (this.currentPlatform && this.currentAction !== 'climbTop') {
-          this.startFallOffPlatform(-1);
-        } else {
-          this.direction = 1;
-          this.facing = 'right';
-          this.updateImageDirection();
-        }
+        this.direction = 1;
+        this.facing = 'right';
+        this.updateImageDirection();
       } else if (this.positionX >= bounds.right) {
         this.positionX = bounds.right;
-        if (this.currentPlatform && this.currentAction !== 'climbTop') {
-          this.startFallOffPlatform(1);
-        } else {
-          this.direction = -1;
-          this.facing = 'left';
-          this.updateImageDirection();
-        }
+        this.direction = -1;
+        this.facing = 'left';
+        this.updateImageDirection();
       }
       this.applyEdgeOffset();
     }
@@ -1421,7 +1429,7 @@ class Creature {
       this.updateImageDirection();
 
       // flips sprites and movement direction upon reaching a wall
-      const maxY = window.innerHeight - this.containerHeight;
+      const maxY = pageHeight() - this.containerHeight;
       if (this.positionY <= 0) {
         this.positionY = 0;
         this.direction = 1;

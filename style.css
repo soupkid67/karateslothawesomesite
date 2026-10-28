@@ -42,7 +42,7 @@ body {
   font-family: var(--font-body);
   font-size: var(--body-size);
   line-height: 1.35;
-  padding: 36px 16px;
+  padding: 160px 16px 36px; /* headroom for Ralsei to stand on the card */
 }
 
 img { display: block; width: 100%; height: auto; }

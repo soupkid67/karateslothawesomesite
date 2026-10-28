@@ -1,7 +1,6 @@
 /* webmeji */
 .webmeji-container {
-  position: fixed;
-  bottom: 0;
+  position: absolute;
   width: 150px;
   height: 150px;
   overflow: hidden;

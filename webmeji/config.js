@@ -1,14 +1,5 @@
 window.SPAWNING = [
-  { id: 'ralsei', config: 'Ralsei_CONFIG' },
-  { id: 'lancer', config: 'Lancer_CONFIG' },
-  { id: 'kris', config: 'Kris_CONFIG' },
-  { id: 'aqua', config: 'Aqua_CONFIG' },
-  { id: 'flowery', config: 'Flowery_CONFIG' },
-  { id: 'noelle', config: 'Noelle_CONFIG' },
-  { id: 'miku', config: 'Miku_CONFIG' },
-  { id: 'pink', config: 'Pink_CONFIG' },
-  { id: 'spamton', config: 'Spamton_CONFIG' },
-  { id: 'susie', config: 'Susie_CONFIG' }
+  { id: 'ralsei', config: 'Ralsei_CONFIG' }
 ];
 
 const GLOBAL_SCALE_MULTIPLIER = 0.6;
@@ -17,10 +8,7 @@ window.Ralsei_CONFIG = {
   "ALLOWANCES": [
     "pet",
     "drag",
-    "bottom",
-    "top",
-    "left",
-    "right"
+    "bottom"
   ],
   "scale": 1.1,
   "walkspeed": 50,
