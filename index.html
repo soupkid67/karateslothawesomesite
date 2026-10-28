@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jane Doe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Almendra:ital,wght@0,400;0,700;1,400&family=Almendra+SC&family=Parisienne&family=Uncial+Antiqua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card">
+    <div class="frame">
+      <i class="loop tl"></i>
+      <i class="loop tr"></i>
+      <i class="loop bl"></i>
+      <i class="loop br"></i>
+
+      <div class="banner"><img src="assets/header.png" alt=""></div>
+      <div class="strip"><img src="assets/strip.png" alt=""></div>
+      <div class="rod"></div>
+
+      <div class="panel">
+        <ul class="nav">
+          <li><a href="#home">Home</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#terms">Terms</a></li>
+          <li><a href="#prices">Prices</a></li>
+        </ul>
+
+        <svg class="divider nav-rule" viewBox="0 0 760 20" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M4 10h330M426 10h330M4 13h330M426 13h330"/>
+          <path d="M334 11.5c14 0 18-8 30-8s12 8 16 8 4-8 16-8 16 8 30 8M334 11.5c14 0 18 7 30 7s12-7 16-7 4 7 16 7 16-7 30-7"/>
+          <path d="M380 3l-5 8.5 5 8 5-8z" fill="currentColor"/>
+        </svg>
+
+        <div class="pages">
+
+          <section class="page" id="home">
+            <div class="title">
+              <img src="assets/title-ornament.png" alt="">
+              <h1>Welcome</h1>
+            </div>
+            <div class="home text">
+              <img src="assets/portrait.png" alt="">
+              <p><span class="accent">✻ Hello and welcome!</span> This is my little corner of the internet. Use the menu above to find out more about me, see my work, and read my terms before commissioning.</p>
+            </div>
+          </section>
+
+          <section class="page default" id="about">
+            <div class="title">
+              <img src="assets/title-ornament.png" alt="">
+              <h1>About Me</h1>
+            </div>
+
+            <div class="columns">
+              <aside class="profile">
+                <img src="assets/portrait.png" alt="Profile picture">
+                <img src="assets/info-top.png" alt="">
+                <ul class="info">
+                  <li><b>Name</b><span>Jane Doe</span></li>
+                  <li><b>Timezone</b><span>CC +0 GMT</span></li>
+                  <li><b>Pronouns</b><span>info/info</span></li>
+                </ul>
+                <img src="assets/info-bottom.png" alt="">
+              </aside>
+
+              <div class="text">
+                <p>✻ <span class="accent">Lorem ipsum dolor sit amet,</span> consectetur adipiscing elit, sed do <span class="hl">eiusmod tempor incididunt</span> ut labore et dolore magna aliqua. Ut <a href="#">enim ad minim veniam</a></p>
+
+                <svg class="divider" viewBox="0 0 500 16" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <path d="M10 8h200M290 8h200"/>
+                  <path d="M210 8c10 0 14-5 22-5 6 0 8 4 4 6-3 1-6-1-4-3M290 8c-10 0-14 5-22 5-6 0-8-4-4-6 3-1 6 1 4 3M232 8h36"/>
+                </svg>
+
+                <p>✻ <span class="accent">Cras finibus gravida lorem.</span> Nam at urna feugiat, feugiat elit eget, scelerisque neque. <span class="accent">Proin a purus</span> gravida, laoreet urna non, faucibus <span class="hl">lectus.</span> Donec malesuada.</p>
+
+                <img class="painting" src="assets/painting.png" alt="">
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="gallery">
+            <div class="title">
+              <img src="assets/title-ornament.png" alt="">
+              <h1>Gallery</h1>
+            </div>
+            <div class="gallery">
+              <img src="assets/portrait.png" alt="">
+              <img src="assets/painting.png" alt="">
+              <img src="assets/header.png" alt="">
+              <img src="assets/strip.png" alt="">
+              <img src="assets/footer.png" alt="">
+              <img src="assets/title-ornament.png" alt="">
+            </div>
+          </section>
+
+          <section class="page" id="terms">
+            <div class="title">
+              <img src="assets/title-ornament.png" alt="">
+              <h1>Terms</h1>
+            </div>
+            <ul class="list text">
+              <li>Payment is required upfront before work begins.</li>
+              <li>Please allow two to four weeks for completion.</li>
+              <li>Commissioned art is for personal use only.</li>
+              <li>I may share finished work in my portfolio.</li>
+              <li>Refunds are only possible before sketching starts.</li>
+            </ul>
+          </section>
+
+          <section class="page" id="prices">
+            <div class="title">
+              <img src="assets/title-ornament.png" alt="">
+              <h1>Prices</h1>
+            </div>
+            <div class="prices">
+              <div class="price"><b>Sketch</b><strong>$20</strong><span>Clean lineart, no colour</span></div>
+              <div class="price"><b>Bust</b><strong>$45</strong><span>Shoulders up, full colour</span></div>
+              <div class="price"><b>Full Body</b><strong>$80</strong><span>Full colour with simple background</span></div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <div class="footer">
+        <img src="assets/footer.png" alt="">
+        <a class="credit" href="#">by xiu.carrd.co</a>
+      </div>
+      <div class="frame-base"></div>
+    </div>
+  </main>
+</body>
+</html>
